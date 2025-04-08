@@ -1,0 +1,26 @@
+---
+
+services:
+  notebook:
+    image: quay.io/jupyter/pytorch-notebook:2025-03-31
+    container_name: ${PROJECT_NAME}
+    restart: unless-stopped
+    volumes:
+      - "notebook_data:/home/jovyan/work"
+      - "cert_data:/etc/letsencrypt"
+    ports:
+      - "${JUPYTER_LAB_HOST_PORT}:8888"
+    command: >
+      start-notebook.py
+      --ServerApp.certfile=/etc/letsencrypt/live/${SSL_CERT_FQDN}/fullchain.pem
+      --ServerApp.keyfile=/etc/letsencrypt/live/${SSL_CERT_FQDN}/privkey.pem
+      --ServerApp.ip='*'
+      --PasswordIdentityProvider.hashed_password='${JUPYTER_LAB_WEB_PWD_HASH}'
+
+volumes:
+  notebook_data:
+    external: true
+    name: ${NOTEBOOK_DATA_VOLUME_NAME}
+  cert_data:
+    external: true
+    name: ${CERT_VOLUME_NAME}
