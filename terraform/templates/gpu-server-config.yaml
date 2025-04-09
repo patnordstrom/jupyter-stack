@@ -41,8 +41,8 @@ runcmd:
 
     jupyter_dir="/opt/jupyter-stack"
     mkdir -p $${jupyter_dir}
-    curl https://akamai-presentations.us-southeast-1.linodeobjects.com/jupyter-stack/docker-compose.yaml -o $${jupyter_dir}/docker-compose.yaml
-    curl https://akamai-presentations.us-southeast-1.linodeobjects.com/jupyter-stack/main.sh -o $${jupyter_dir}/main.sh
+    curl https://raw.githubusercontent.com/patnordstrom/jupyter-stack/refs/heads/main/docker/docker-compose.yaml -o $${jupyter_dir}/docker-compose.yaml
+    curl https://raw.githubusercontent.com/patnordstrom/jupyter-stack/refs/heads/main/docker/main.sh -o $${jupyter_dir}/main.sh
     chmod +x $${jupyter_dir}/main.sh
 
     cat > $${jupyter_dir}/vars.sh <<EOF
