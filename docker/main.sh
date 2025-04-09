@@ -7,10 +7,13 @@ _script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd -P)
 
 source "${_script_dir}/vars.sh"
 
+echo "$(date '+%Y-%m-%d %H:%M:%S') starting script"
 
 ### declare functions ###
 
 function create_volumes {
+
+  echo "$(date '+%Y-%m-%d %H:%M:%S') creating volumes"
 
   docker volume create --name "${NOTEBOOK_DATA_VOLUME_NAME}"
   docker volume create --name "${CERT_VOLUME_NAME}"
@@ -19,6 +22,8 @@ function create_volumes {
 
 
 function provision_cert {
+
+  echo "$(date '+%Y-%m-%d %H:%M:%S') provisioning certs"
 
   docker run --rm \
     -p 8080:80 \
@@ -41,6 +46,8 @@ function provision_cert {
 
 function create_password_hash {
 
+  echo "$(date '+%Y-%m-%d %H:%M:%S') creating jupyter password hash"
+
   export JUPYTER_LAB_WEB_PWD_HASH=$( \
     docker run --rm \
     quay.io/jupyter/base-notebook ipython -c \
@@ -51,6 +58,8 @@ function create_password_hash {
 }
 
 function start_docker_services {
+
+  echo "$(date '+%Y-%m-%d %H:%M:%S') starting docker container"
 
   docker compose -f "${_script_dir}/docker-compose.yaml" -p "${PROJECT_NAME}" up -d
 
