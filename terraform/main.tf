@@ -189,8 +189,9 @@ resource "linode_firewall" "ingress_firewall" {
   nodebalancers = [linode_nodebalancer.gpu_server_ingress.id]
 }
 
-# This is the final task which waits for Jupyter Lab to be ready
-# and it will output the URL and Password to access
+# This is the final task which waits for Jupyter Lab endpoint to return HTTP 200
+# Once ready it will output the URL and Password to access
+# The whole terraform run end-to-end takes about 10 minutes
 resource "terraform_data" "wait_for_jupyter_lab_endpoint_ready" {
   provisioner "local-exec" {
     command = "./scripts/wait_for_jupyter_https_ready.sh"
