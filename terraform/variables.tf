@@ -49,6 +49,16 @@ variable "jupyter_lab_host_port" {
   default     = "8888"
 }
 
+variable "deployment_state" {
+  type = string
+  description = "Used to trigger unique deployment values depending on if running terraform during initial deploy or after deployment"
+  default = "initial_deploy"
+  validation {
+    condition = can(regex("initial_deploy|post_deploy", var.deployment_state))
+    error_message = "Valid values are \"initial_deploy\" or \"post_deploy\""
+  }
+}
+
 # Configure the below via tfvars file, environment variables, etc.
 
 variable "authorized_users" {

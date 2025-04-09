@@ -1,19 +1,31 @@
+# We only want to allow port 80 through the nodebalancer initially when deploying
+# so we can allow the Let's Encrypt http challenge to work
+locals {
+  nb_firewall_rule_letsencrypt = (var.deployment_state == "initial_deploy" ? "ACCEPT" : "DROP")
+}
+
 resource "random_password" "root_pass" {
   length  = 30
   special = true
 }
 
+# We auto generate the password you will login to Juypyter Lab
+# You can fetch from the state and it is supplied as output at the end of the run
 resource "random_password" "jupyter_lab_pass" {
   length           = 30
   special          = true
   override_special = "!@#%^*"
 }
 
+# Create the Nodebalancer resource
 resource "linode_nodebalancer" "gpu_server_ingress" {
   label  = "${var.node_label}-ingress"
   region = var.region
 }
 
+# This enables port 80 on the Nodebalancer for the Let's Encrypt challenge
+# For all of these Nodebalancer configs we just use TCP pass-thru and
+# we also turn health checks off since some of the actions are short lived
 resource "linode_nodebalancer_config" "gpu_server_ingress_port80" {
   nodebalancer_id = linode_nodebalancer.gpu_server_ingress.id
   port            = 80
@@ -25,6 +37,7 @@ resource "linode_nodebalancer_config" "gpu_server_ingress_port80" {
 
 }
 
+# This maps to port 8080 on the GPU server where certbot will be listening
 resource "linode_nodebalancer_node" "gpu_server_ingress_port80_backend" {
   nodebalancer_id = linode_nodebalancer.gpu_server_ingress.id
   config_id       = linode_nodebalancer_config.gpu_server_ingress_port80.id
@@ -34,6 +47,7 @@ resource "linode_nodebalancer_node" "gpu_server_ingress_port80_backend" {
   mode            = "accept"
 }
 
+# This is the HTTPS ingreass for Jupyter Lab
 resource "linode_nodebalancer_config" "gpu_server_ingress_port443" {
   nodebalancer_id = linode_nodebalancer.gpu_server_ingress.id
   port            = 443
@@ -45,6 +59,7 @@ resource "linode_nodebalancer_config" "gpu_server_ingress_port443" {
 
 }
 
+# This maps to the Jupyter lab port on the backend (typicall port 8888)
 resource "linode_nodebalancer_node" "gpu_server_ingress_port443_backend" {
   nodebalancer_id = linode_nodebalancer.gpu_server_ingress.id
   config_id       = linode_nodebalancer_config.gpu_server_ingress_port443.id
@@ -54,6 +69,9 @@ resource "linode_nodebalancer_node" "gpu_server_ingress_port443_backend" {
   mode            = "accept"
 }
 
+# We create the DNS A record to point to the Nodebalancer
+# The provisioner interrogates the name server to wait for 
+# DNS propagation before continuing since that is needed for Let's Encrypt
 resource "linode_domain_record" "jupyter_lab_dns_a" {
   domain_id   = var.linode_domain_id
   name        = split(".", var.ssl_cert_fqdn)[0]
@@ -77,7 +95,9 @@ resource "linode_domain_record" "jupyter_lab_dns_aaaa" {
   ttl_sec     = 30
 }
 
-
+# This is the template for cloud-init for configuring the GPU server
+# with it's dependencies and our custom bootstrap script that
+# provisions the certficates, volumes, and configurations for the pytorch container
 data "template_file" "gpu_server_config" {
   template = file("${path.module}/templates/gpu-server-config.yaml")
   vars = {
@@ -91,6 +111,7 @@ data "template_file" "gpu_server_config" {
   }
 }
 
+# This deploys the GPU server as soon as the DNS is propagated
 resource "linode_instance" "gpu_server" {
   label            = var.node_label
   region           = var.region
@@ -108,6 +129,9 @@ resource "linode_instance" "gpu_server" {
 
 }
 
+# GPU server will accept SSH from your computer (allowed IPs defined in tfvars)
+# We also whitelist the Nodebalancer subnet so it can connect to our instance
+# on the required ports (port 8080 for Let's Encrypt challenge / port 8888 for Jupyter Lab by default)
 resource "linode_firewall" "gpu_server_firewall" {
   label = "${var.node_label}-fw"
 
@@ -126,11 +150,12 @@ resource "linode_firewall" "gpu_server_firewall" {
     label    = "allow-from-from-nb"
     action   = "ACCEPT"
     protocol = "TCP"
-    ports    = "8080,8888"
+    ports    = "8080,${var.jupyter_lab_host_port}"
     ipv4     = ["192.168.255.0/24"]
   }
 
   linodes = [linode_instance.gpu_server.id]
+
 }
 
 resource "linode_firewall" "ingress_firewall" {
@@ -149,7 +174,7 @@ resource "linode_firewall" "ingress_firewall" {
 
   inbound {
     label    = "allow-http-cert-challenge"
-    action   = "ACCEPT"
+    action   = local.nb_firewall_rule_letsencrypt
     protocol = "TCP"
     ports    = "80"
     ipv4     = ["0.0.0.0/0"]
@@ -157,4 +182,15 @@ resource "linode_firewall" "ingress_firewall" {
   }
 
   nodebalancers = [linode_nodebalancer.gpu_server_ingress.id]
+}
+
+resource "terraform_data" "wait_for_jupyter_lab_endpoint_ready" {
+  provisioner "local-exec" {
+    command = "./scripts/wait_for_jupyter_https_ready.sh"
+    environment = {
+      ENDPOINT = "https://${var.ssl_cert_fqdn}/login"
+    }
+  }
+
+  depends_on = [ linode_instance.gpu_server ]
 }
