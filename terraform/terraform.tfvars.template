@@ -1,0 +1,5 @@
+authorized_users     = ["yourusername"]
+allowed_ssh_user_ips = ["1.2.3.4/32"]
+ssl_cert_email       = "example@domain.tld"
+ssl_cert_fqdn        = "jupyter-lab.example.com"
+linode_domain_id     = 123456
