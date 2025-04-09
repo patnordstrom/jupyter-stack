@@ -1,5 +1,8 @@
 # prevent committing configuration files or generated files
+vars.sh
 
+# VS code extensions
+.vscode
 
 # Local .terraform directories
 **/.terraform/*

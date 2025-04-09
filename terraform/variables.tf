@@ -25,6 +25,30 @@ variable "image_type" {
   default     = "g2-gpu-rtx4000a1-s"
 }
 
+variable "project_name" {
+  type        = string
+  description = "Specifies the name of the docker container for running Jupyter Lab"
+  default     = "jupyter-lab-docker"
+}
+
+variable "notebook_data_volume_name" {
+  type        = string
+  description = "Specifies the name of the docker volume to use for notebook data"
+  default     = "notebook-data"
+}
+
+variable "cert_volume_name" {
+  type        = string
+  description = "Specifies the name of the docker volume to use for TLS certificates"
+  default     = "cert-data"
+}
+
+variable "jupyter_lab_host_port" {
+  type        = string
+  description = "The port that Jupyter Lab listens on the GPU server"
+  default     = "8888"
+}
+
 # Configure the below via tfvars file, environment variables, etc.
 
 variable "authorized_users" {
@@ -35,4 +59,19 @@ variable "authorized_users" {
 variable "allowed_ssh_user_ips" {
   type        = list(string)
   description = "List of IP addresses that can SSH into the server"
+}
+
+variable "ssl_cert_fqdn" {
+  type        = string
+  description = "Domain name for accessing the Jupyter Lab UI"
+}
+
+variable "ssl_cert_email" {
+  type        = string
+  description = "Email address to use for Let's Encrypt request"
+}
+
+variable "linode_domain_id" {
+  type        = number
+  description = "The primary key for the DNS zone"
 }
