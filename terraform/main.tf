@@ -158,6 +158,11 @@ resource "linode_firewall" "gpu_server_firewall" {
 
 }
 
+# Firewall for the Nodebalancer that allows port 443 for Jupyter Lab
+# and port 80 is conditional.  When deployment_state is set to "initial_deploy"
+# we ACCEPT connections to allow Let's Encrypt challenge.  The idea is that once
+# terraform runs the first time we can then run it a 2nd time after and set 
+# deployment_state to "post_deploy" which will turn off port 80 access
 resource "linode_firewall" "ingress_firewall" {
   label = "${var.node_label}-ingress-fw"
 
@@ -184,6 +189,8 @@ resource "linode_firewall" "ingress_firewall" {
   nodebalancers = [linode_nodebalancer.gpu_server_ingress.id]
 }
 
+# This is the final task which waits for Jupyter Lab to be ready
+# and it will output the URL and Password to access
 resource "terraform_data" "wait_for_jupyter_lab_endpoint_ready" {
   provisioner "local-exec" {
     command = "./scripts/wait_for_jupyter_https_ready.sh"
