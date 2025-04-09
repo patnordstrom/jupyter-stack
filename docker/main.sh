@@ -20,7 +20,7 @@ function create_volumes {
 
 function provision_cert {
 
-  docker run -it --rm \
+  docker run --rm \
     -p 8080:80 \
     -v "${CERT_VOLUME_NAME}":/etc/letsencrypt \
     certbot/certbot certonly \
@@ -31,7 +31,7 @@ function provision_cert {
     --domain "${SSL_CERT_FQDN}" \
     --email "${SSL_CERT_EMAIL}"
 
-  docker run -it --rm \
+  docker run --rm \
     -v "${CERT_VOLUME_NAME}":/etc/letsencrypt \
     bash \
     -c \
@@ -42,7 +42,7 @@ function provision_cert {
 function create_password_hash {
 
   export JUPYTER_LAB_WEB_PWD_HASH=$( \
-    docker run -it --rm \
+    docker run --rm \
     quay.io/jupyter/base-notebook ipython -c \
     "from jupyter_server.auth import passwd; passwd('"${JUPYTER_LAB_WEB_PWD}"')" | \
     grep -Po "argon[^']+"
