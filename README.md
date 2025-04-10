@@ -1,1 +1,2 @@
 # jupyter-stack
+Includes Terraform code for deploying Jupyter Lab via Docker on Akamai GPU compute instances:  https://patnordstrom.medium.com/deploy-jupyter-lab-on-akamai-cloud-gpu-compute-instances-using-terraform-076415f0c0c3
