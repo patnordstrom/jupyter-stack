@@ -2,7 +2,7 @@
 
 services:
   notebook:
-    image: quay.io/jupyter/pytorch-notebook:2025-03-31
+    image: quay.io/jupyter/pytorch-notebook:2025-12-03
     container_name: ${PROJECT_NAME}
     restart: unless-stopped
     volumes:
