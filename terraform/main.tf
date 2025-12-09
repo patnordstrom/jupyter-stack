@@ -200,5 +200,5 @@ resource "terraform_data" "wait_for_jupyter_lab_endpoint_ready" {
     }
   }
 
-  depends_on = [ linode_instance.gpu_server ]
+  depends_on = [linode_instance.gpu_server]
 }
