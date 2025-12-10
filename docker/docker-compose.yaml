@@ -2,9 +2,16 @@
 
 services:
   notebook:
-    image: quay.io/jupyter/pytorch-notebook:2025-12-03
+    image: quay.io/jupyter/pytorch-notebook:cuda12-python-3.13
     container_name: ${PROJECT_NAME}
     restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     volumes:
       - "notebook_data:/home/jovyan/work"
       - "cert_data:/etc/letsencrypt"
